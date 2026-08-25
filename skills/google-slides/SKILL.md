@@ -74,69 +74,88 @@ do not retry in a loop.
 
 ---
 
-## Route B: Generate .pptx, upload with conversion
+## Route B: Build an ODP and upload it (fully automated)
 
-When only the Drive connector is available. Google Drive converts uploaded
-Office files to native Google formats **by default**, so a `.pptx` upload becomes
-a real, fully editable Google Slides deck.
+When only the Drive connector is available. Drive converts uploaded office
+documents to native Google formats automatically, so an uploaded presentation
+becomes a real, editable Google Slides deck.
 
-1. **Build the deck as .pptx** using the built-in `pptx` skill. Everything that
-   skill knows about layouts, masters and speaker notes applies — this route does
-   not replace it, it consumes its output.
+**Author the deck as ODP, not PPTX.** Both convert to Slides, but `base64Content`
+is a *string parameter* — the entire encoded file has to be reproduced exactly in
+the tool call. An ODP carrying the same content is roughly **93% smaller** once
+encoded (a two-slide deck is ~1,800 base64 characters versus ~25,000 for `.pptx`).
+That difference is the whole reason this route is usable: `.pptx` is large enough
+that a single mis-transcribed character makes the upload fail, while ODP fits
+comfortably in one call.
 
-2. **Upload with conversion left ON:**
+1. **Write a deck spec** — plain JSON:
+
+   ```json
+   {
+     "slides": [
+       {"layout": "title",   "title": "Q3 Architecture Review", "subtitle": "Platform team"},
+       {"layout": "section", "title": "Where we are"},
+       {"layout": "bullets", "title": "Current state",
+        "bullets": ["Five services in one environment", "Two datastores"],
+        "notes": "Optional speaker notes"}
+     ]
+   }
+   ```
+
+   Layouts: `title`, `section`, `bullets`.
+
+2. **Build the .odp and get its base64:**
+
+   ```bash
+   python3 scripts/make_odp.py deck.json -o deck.odp --base64
+   ```
+
+   Run without `--base64` first to see the size. The script warns when the encoded
+   deck exceeds ~20,000 characters, which is the point at which a single upload
+   call becomes unreliable.
+
+3. **Upload it, leaving conversion ON:**
 
    ```
    create_file(
-     title            = "Q3 Architecture Review",        # becomes the deck name
-     base64Content    = <the .pptx file, base64 encoded>,
-     contentMimeType  = "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+     title            = "Q3 Architecture Review",
+     base64Content    = <output of --base64>,
+     contentMimeType  = "application/vnd.oasis.opendocument.presentation",
      parentId         = <optional destination folder id>
    )
    ```
 
-   Do **not** set `disableConversionToGoogleType: true` — that flag keeps the file
-   as an inert `.pptx` sitting in Drive rather than converting it to Slides, which
-   defeats the purpose of this route.
+   Do **not** set `disableConversionToGoogleType: true` — that leaves an inert
+   ODP file in Drive instead of converting it to Slides.
 
-   Use `base64Content` (a `.pptx` is a binary zip), never `textContent`.
+   Copy the base64 exactly. It is rejected outright if even one character is
+   wrong; there is no partial success.
 
-3. **Confirm it converted.** Call `get_file_metadata` and check the mime type is
-   `application/vnd.google-apps.presentation`. If it is still the pptx mime type,
-   the conversion did not happen — say so rather than reporting success.
+4. **Confirm and verify.** The `create_file` response should already show
+   `"mimeType": "application/vnd.google-apps.presentation"`. Then call
+   `read_file_content` to confirm the slides and their text actually landed —
+   do not report success from the upload response alone.
 
-4. **Report the deck URL.**
+5. **Report the deck URL** from `viewUrl`.
 
-### Read this before choosing Route B
+### When to use .pptx instead
 
-**The upload leg is unreliable for real decks.** `base64Content` is a string
-parameter, so the entire encoded file has to be reproduced exactly in the tool
-call. A minimal two-slide deck is already ~25,000 base64 characters, and
-reproducing that verbatim fails in practice — a single wrong character is
-rejected outright as invalid base64.
+Use the built-in `pptx` skill, and **hand the file to the user** rather than
+uploading it, when the deck needs more than this route offers — real themes,
+images, tables, precise layout, or corporate template inheritance. Give them the
+path and let them drop it into Drive; the same automatic conversion applies, with
+no size limit and no setup. One manual step, and it handles any deck.
 
-Treat Route B's automated upload as viable only for very small files. For a real
-deck, prefer one of these:
+Rule of thumb: **ODP for automated delivery, PPTX for rich decks handed off.**
 
-- **Route A**, if the Slides MCP server is available. This is the only fully
-  automated path.
-- **Hand off the file.** Generate the `.pptx` locally with the `pptx` skill, give
-  the user the path, and have them drag it into Drive. Drive converts it to
-  Slides on upload — no flag needed, no setup. One manual step, completely
-  reliable, and it works for a deck of any size.
-
-Do not burn several attempts retrying a large base64 upload. Recognise the size
-and offer the handoff instead.
-
-### Other limitations of Route B
+### Limitation: this route cannot edit
 
 **The Drive connector cannot change a deck's content after upload.** Its
 `update_file` tool supports only `title` and `parentId` — metadata, not slides.
 
-So on this route, revisions mean regenerating the `.pptx` and uploading again,
-which produces a **new file with a new URL**. Tell the user this up front if they
-are likely to want edits. If they need to iterate on one stable link, they need
-Route A.
+Revisions mean rebuilding the ODP and uploading again, producing a **new file at
+a new URL**. Tell the user up front if they are likely to want edits. To iterate
+on one stable link, they need Route A.
 
 ### Verified behavior (2026-08-25)
 
@@ -144,11 +163,12 @@ Tested directly against the Google Drive connector:
 
 | Behavior | Result |
 | --- | --- |
-| Upload converts to a Google first-party type by default | **Confirmed** — `text/plain` upload returned `application/vnd.google-apps.document` |
-| `create_file` can create a native Slides file with no content | **Confirmed** — returned `application/vnd.google-apps.presentation` with a working `docs.google.com/presentation/...` URL |
-| Uploading a real `.pptx` via `base64Content` | **Failed** — a ~25,000-character base64 string could not be reproduced exactly in the tool call. This is the limitation described above, not a connector fault. |
-
----
+| Upload converts to a Google first-party type by default | **Confirmed** — `text/plain` came back as `application/vnd.google-apps.document` |
+| `create_file` creates a native, empty Slides file | **Confirmed** — returned a working `docs.google.com/presentation/...` URL |
+| **ODP upload → native Google Slides, with content** | **Confirmed** — a 1,341-byte ODP (1,788 base64 chars) converted to `application/vnd.google-apps.presentation`; `read_file_content` returned both slides, the subtitle, and all four bullets in order |
+| `scripts/make_odp.py` output converts identically | **Confirmed** — script-generated deck converted and read back correctly |
+| `.pptx` upload via `base64Content` | **Failed** — ~25,000 base64 characters could not be reproduced exactly in one tool call. Use ODP, or hand the `.pptx` to the user. |
+| Speaker notes surviving conversion | **Unverified** — `read_file_content` does not surface notes, so this was not confirmed either way |
 
 ## Creating an empty deck
 
@@ -201,3 +221,4 @@ mimeType = 'application/vnd.google-apps.presentation' and title contains 'archit
 | --- | --- | --- |
 | [references/mcp-setup.md](references/mcp-setup.md) | Configuring the Google Slides MCP server, and what to tell the user when nothing is connected | Phase 0, route unavailable |
 | [references/deck-design.md](references/deck-design.md) | Slide structure, density, and what translates poorly into Slides | Before generating |
+| [scripts/make_odp.py](scripts/make_odp.py) | Builds a minimal `.odp` from a JSON deck spec and prints its base64 | Route B, step 2 |
