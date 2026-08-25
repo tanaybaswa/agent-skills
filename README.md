@@ -3,7 +3,7 @@
 My agent skills for Claude Code — HTML deliverables (slides, reports) and
 diagramming, plus the official Azure icon set and reference architectures.
 
-**8 active skills** in `skills/` · **7 benched** in `other_diagraming_tools/`
+**9 active skills** in `skills/` · **7 benched** in `other_diagraming_tools/`
 
 > **Diagrams → [`drawio-skill`](skills/drawio-skill/).** It is the one
 > diagramming skill that is installed and the default for every diagram request.
@@ -17,6 +17,7 @@ diagramming, plus the official Azure icon set and reference architectures.
 - [Quick start](#quick-start)
 - [Repository map](#repository-map)
 - [Active skills](#active-skills)
+- [Presentations — all three routes](#presentations--all-three-routes)
 - [Research pipeline](#research-pipeline)
 - [The bench](#the-bench)
 - [Azure assets](#azure-assets)
@@ -56,7 +57,8 @@ left out — see [The bench](#the-bench).
 agent-skills/
 ├── skills/                                     ACTIVE — installed, agents use these
 │   ├── drawio-skill/                           ★ the diagramming skill  (vendored)
-│   ├── frontend-slides/                        HTML presentations       (mine)
+│   ├── frontend-slides/                        HTML decks               (mine)
+│   ├── google-slides/                          Google Slides decks      (mine)
 │   ├── frontend-reports/                       HTML reports             (mine)
 │   ├── research/                               ┐                        (vendored)
 │   ├── research-add-items/                     │ deep-research
@@ -95,12 +97,53 @@ agent-skills/
 |---|---|---|---|
 | ★ [**drawio-skill**](skills/drawio-skill/) | `.drawio` XML + PNG/SVG/PDF/JPG export | **Any diagram** — architecture, flowchart, ER, UML, C4, BPMN, SysML, network topology, mind map. Also generates diagrams **from** Terraform, Kubernetes, docker-compose, a SQL schema, or a source tree. | draw.io desktop CLI (required); Graphviz for auto-layout |
 | [**frontend-slides**](skills/frontend-slides/) | One self-contained `.html` deck on a fixed 1920×1080 stage | You want an animated presentation that stays 16:9 on every screen, or need a `.pptx` converted to web | Node (PDF export), `python-pptx` (PPTX import) |
+| [**google-slides**](skills/google-slides/) | A real Google Slides deck in Drive | You want a deck the team can co-edit, comment on, and open from a link | Google Slides MCP server, **or** the Google Drive connector |
 | [**frontend-reports**](skills/frontend-reports/) | One self-contained `.html` report, print-ready | You want a scrollable customer-facing document — red team assessment, dataset doc, model card, eval summary | Node (PDF export) |
 
 `drawio-skill` ships 38 Python scripts (infra importers, auto-layout, shape
 search, diff, PPTX/Mermaid conversion) and 14 reference docs. The two frontend
 skills each ship `scripts/export-pdf.sh` and `scripts/deploy.sh` (Vercel), with
 no build step.
+
+---
+
+## Presentations — all three routes
+
+**All three are primary.** They are not ranked and not interchangeable — they
+produce genuinely different artifacts, and the choice is made by what the user
+will *do* with the result, never by which is "better".
+
+| Deliverable | Skill | Where it lives |
+|---|---|---|
+| Animated, fully designed deck as a web page on a link you own | [`frontend-slides`](skills/frontend-slides/) | this repo |
+| Deck your team co-edits and comments on | [`google-slides`](skills/google-slides/) | this repo |
+| `.pptx` file on disk — email it, drop it in a corporate template | **`pptx`** | ships with Claude Code, nothing to install |
+
+```
+"make me a deck"
+      │
+      ├─ they'll present it, and you want design control  →  frontend-slides   → .html
+      ├─ colleagues will edit or comment on it            →  google-slides     → Drive link
+      └─ they need a file to send or hand off             →  pptx (built-in)   → .pptx
+```
+
+If the request is ambiguous, **ask** — the three are not convertible after the
+fact without redoing the work. Each skill's `description` names the other two, so
+an agent finds all three from whichever it matches first.
+
+### Google Slides has two routes
+
+`google-slides` works with either connector, and picks in Phase 0:
+
+| Route | Needs | Can it edit an existing deck? |
+|---|---|---|
+| **A** — official [Google Slides MCP server](https://developers.google.com/workspace/slides/api/guides/configure-mcp-server) | OAuth 2.0, Workspace Developer Preview enrollment | **Yes** — `read_presentation` / `update_presentation` |
+| **B** — Google Drive connector | Drive connector only, no extra setup | **No** — regenerating produces a new URL |
+
+Route B generates a `.pptx` (via the built-in `pptx` skill) and uploads it with
+Drive's automatic conversion on, which yields a real editable Slides deck. It is
+create-only: the Drive connector's `update_file` changes title and folder, not
+content. See [`skills/google-slides/references/mcp-setup.md`](skills/google-slides/references/mcp-setup.md).
 
 ---
 
@@ -258,6 +301,7 @@ Each `SKILL.md` states its own. Across the active skills:
 | Python 3 | `drawio-skill` (38 scripts) |
 | Graphviz (`dot`) | `drawio-skill` auto-layout — optional |
 | Node.js | `frontend-slides`, `frontend-reports` (PDF export, deploy) |
+| Google Slides MCP **or** Drive connector | `google-slides` — **required**, either one |
 | `python-pptx` | `frontend-slides` PPTX conversion only |
 | `pyyaml` | the research skills — **required** |
 | `~/.claude/agents/web-search-agent.md` | the research skills — **required**, see [Research pipeline](#research-pipeline) |

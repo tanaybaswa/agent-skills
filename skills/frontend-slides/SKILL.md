@@ -1,6 +1,6 @@
 ---
 name: frontend-slides
-description: Create stunning, animation-rich HTML presentations from scratch or by converting PowerPoint files. Use when the user wants to build a presentation, convert a PPT/PPTX to web, or create slides for a talk/pitch. Helps non-designers discover their aesthetic through visual exploration rather than abstract choices.
+description: 'Create stunning, animation-rich HTML presentations from scratch or by converting PowerPoint files. Produces a single self-contained .html deck on a fixed 1920x1080 stage — the right artifact when you want full design control, animation, and a link you own. Use when the user wants a talk, pitch or conference deck as a web page, or a PPT/PPTX converted to web. Helps non-designers discover their aesthetic through visual exploration rather than abstract choices. This is one of three presentation skills, split by output artifact: use google-slides for a deck the team can co-edit and comment on in Google Drive, and the built-in pptx skill for a .pptx file on disk.'
 ---
 
 # Frontend Slides
