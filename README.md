@@ -28,6 +28,17 @@ Vendored from upstream projects — see [Third-party skills](#third-party-skills
 
 **Picking one:** `mermaid-diagrams` for anything that should live in git and render on GitHub. `drawio-skill` when you need rich shape vocabulary, swimlanes, or a polished exportable image. `excalidraw-diagram-generator` for a sketchy, whiteboard feel. `c4-architecture` when the subject is system architecture specifically. `plantuml-ascii` when it has to render in a terminal.
 
+## Azure
+
+[`azure/`](azure/) holds diagram assets rather than a skill: the 714 official
+Azure service icons (with a name → path lookup index) and reference
+architectures from the Azure Architecture Center, including editable Visio
+sources. Pairs with `drawio-skill` and `excalidraw-diagram-generator`.
+
+The icons are under Microsoft's terms (permitted for architecture diagrams,
+training material and documentation; no modification) — not an open-source
+license. See [`azure/README.md`](azure/README.md).
+
 ## Install
 
 Symlink the skills you want into your personal skills directory:
