@@ -1,10 +1,14 @@
 # agent-skills
 
-My agent skills for Claude Code — HTML deliverables (slides, reports) and a
-complete toolkit for diagrams and software architecture, plus the official Azure
-icon set and reference architectures.
+My agent skills for Claude Code — HTML deliverables (slides, reports) and
+diagramming, plus the official Azure icon set and reference architectures.
 
-**10 skills** · self-contained directories · drop-in for `~/.claude/skills/`
+**3 active skills** in `skills/` · **7 benched** in `other_diagraming_tools/`
+
+> **Diagrams → [`drawio-skill`](skills/drawio-skill/).** It is the one
+> diagramming skill that is installed and the default for every diagram request.
+> The alternatives (Mermaid, Excalidraw, PlantUML, C4) are on the
+> [bench](#the-bench) — kept for reference, not active.
 
 ---
 
@@ -12,10 +16,8 @@ icon set and reference architectures.
 
 - [Quick start](#quick-start)
 - [Repository map](#repository-map)
-- [Skill index](#skill-index)
-  - [Authored here](#authored-here)
-  - [Diagrams & software architecture](#diagrams--software-architecture)
-- [Which diagram skill should I use?](#which-diagram-skill-should-i-use)
+- [Active skills](#active-skills)
+- [The bench](#the-bench)
 - [Azure assets](#azure-assets)
 - [Installing](#installing)
 - [Conventions](#conventions)
@@ -33,7 +35,8 @@ mkdir -p ~/.claude/skills
 for s in skills/*/; do ln -sfn "$PWD/$s" ~/.claude/skills/"$(basename "$s")"; done
 ```
 
-Symlinking (rather than copying) means `git pull` updates every installed skill.
+That installs the three active skills. `other_diagraming_tools/` is deliberately
+left out — see [The bench](#the-bench).
 
 ---
 
@@ -41,19 +44,21 @@ Symlinking (rather than copying) means `git pull` updates every installed skill.
 
 ```
 agent-skills/
-├── skills/                                     10 skills, one directory each
+├── skills/                                     ACTIVE — installed, agents use these
+│   ├── drawio-skill/                           ★ the diagramming skill  (vendored)
 │   ├── frontend-slides/                        HTML presentations       (mine)
-│   ├── frontend-reports/                       HTML reports             (mine)
-│   ├── drawio-skill/                           .drawio files            (vendored)
-│   ├── mermaid-diagrams/                       Mermaid source           (vendored)
-│   ├── pretty-mermaid/                         Mermaid → SVG/PNG/ASCII  (vendored)
-│   ├── excalidraw-diagram-generator/           .excalidraw files        (vendored)
-│   ├── plantuml-ascii/                         ASCII diagrams           (vendored)
-│   ├── c4-architecture/                        C4 model docs            (vendored)
-│   ├── architecture-blueprint-generator/       codebase → arch docs     (vendored)
-│   └── create-architectural-decision-record/   ADRs                     (vendored)
+│   └── frontend-reports/                       HTML reports             (mine)
 │
-├── azure/                                      diagram assets, not a skill
+├── other_diagraming_tools/                     BENCH — reference only, not installed
+│   ├── mermaid-diagrams/                       Mermaid source
+│   ├── pretty-mermaid/                         Mermaid → SVG/PNG/ASCII
+│   ├── excalidraw-diagram-generator/           .excalidraw files
+│   ├── plantuml-ascii/                         ASCII diagrams
+│   ├── c4-architecture/                        C4 model docs
+│   ├── architecture-blueprint-generator/       codebase → arch docs
+│   └── create-architectural-decision-record/   ADRs
+│
+├── azure/                                      assets, not a skill
 │   ├── icons/                                  714 official Azure SVG icons, 29 categories
 │   ├── icon-index.json                         service name → file path lookup
 │   ├── reference-architectures/                Learn diagrams + editable Visio sources
@@ -65,57 +70,51 @@ agent-skills/
 
 ---
 
-## Skill index
-
-### Authored here
+## Active skills
 
 | Skill | Produces | Use it when | Deps |
 |---|---|---|---|
+| ★ [**drawio-skill**](skills/drawio-skill/) | `.drawio` XML + PNG/SVG/PDF/JPG export | **Any diagram** — architecture, flowchart, ER, UML, C4, BPMN, SysML, network topology, mind map. Also generates diagrams **from** Terraform, Kubernetes, docker-compose, a SQL schema, or a source tree. | draw.io desktop CLI (required); Graphviz for auto-layout |
 | [**frontend-slides**](skills/frontend-slides/) | One self-contained `.html` deck on a fixed 1920×1080 stage | You want an animated presentation that stays 16:9 on every screen, or need a `.pptx` converted to web | Node (PDF export), `python-pptx` (PPTX import) |
 | [**frontend-reports**](skills/frontend-reports/) | One self-contained `.html` report, print-ready | You want a scrollable customer-facing document — red team assessment, dataset doc, model card, eval summary | Node (PDF export) |
 
-Both ship `scripts/export-pdf.sh` and `scripts/deploy.sh` (Vercel). Neither has a
-build step; charts come from a CDN, fonts from Fontshare/Google Fonts.
-
-### Diagrams & software architecture
-
-All eight are vendored from upstream projects — see [Licensing](#licensing).
-
-| Skill | Produces | Use it when | Deps |
-|---|---|---|---|
-| [**drawio-skill**](skills/drawio-skill/) | `.drawio` XML + PNG/SVG/PDF export | You need an **editable draw.io file**, a rich shape vocabulary (cloud icons, BPMN, SysML, swimlanes), or a diagram generated **from** Terraform / Kubernetes / SQL / a codebase | draw.io desktop CLI; Graphviz for auto-layout |
-| [**mermaid-diagrams**](skills/mermaid-diagrams/) | Mermaid source inside Markdown | The diagram should **live in git** and render natively on GitHub | none |
-| [**pretty-mermaid**](skills/pretty-mermaid/) | Themed SVG / PNG / ASCII **from existing** Mermaid | You already have Mermaid and want it themed, exported, or made terminal-friendly (15 themes) | Node |
-| [**excalidraw-diagram-generator**](skills/excalidraw-diagram-generator/) | `.excalidraw` JSON | You want a **hand-drawn / whiteboard** look you'll keep rearranging | Python (icon importer) |
-| [**plantuml-ascii**](skills/plantuml-ascii/) | ASCII / Unicode text | The diagram must render in a **terminal, code comment, or chat** — no image file | PlantUML |
-| [**c4-architecture**](skills/c4-architecture/) | `docs/architecture/c4-*.md` | You're documenting a system with the **C4 model** — context, container, component, deployment | none |
-| [**architecture-blueprint-generator**](skills/architecture-blueprint-generator/) | Architecture documentation | You point it at an **existing repo** and want its architecture reverse-engineered | none |
-| [**create-architectural-decision-record**](skills/create-architectural-decision-record/) | An ADR document | You're recording **why** a decision was made | none |
+`drawio-skill` ships 38 Python scripts (infra importers, auto-layout, shape
+search, diff, PPTX/Mermaid conversion) and 14 reference docs. The two frontend
+skills each ship `scripts/export-pdf.sh` and `scripts/deploy.sh` (Vercel), with
+no build step.
 
 ---
 
-## Which diagram skill should I use?
+## The bench
 
-Seven of these overlap on the word "diagram". The deciding question is almost
-always **what artifact do you want to end up with?**
+Everything in [`other_diagraming_tools/`](other_diagraming_tools/) is **benched**:
+kept in the repo for reference, comparison and occasional swap-in, but **not
+installed and not surfaced to agents**.
 
-| I want… | Use |
-|---|---|
-| A file I can keep editing in draw.io | `drawio-skill` |
-| A diagram that renders on GitHub in my README/PR | `mermaid-diagrams` |
-| My existing Mermaid turned into a nice image | `pretty-mermaid` |
-| Something sketchy I'll rearrange on a whiteboard | `excalidraw-diagram-generator` |
-| Something that renders in a terminal | `plantuml-ascii` |
-| A diagram built from my Terraform/K8s/SQL/code | `drawio-skill` |
-| Layered architecture docs at several zoom levels | `c4-architecture` |
-| Architecture docs for a repo that already exists | `architecture-blueprint-generator` |
-| A record of why we chose X over Y | `create-architectural-decision-record` |
+**Why.** Seven diagramming skills all claimed the same "diagram / flowchart /
+architecture" triggers. With them all installed, *"draw me an architecture
+diagram"* had no tiebreaker and resolved close to at random. One primary skill
+plus a bench makes the behaviour predictable.
 
-Common pairing: author with `mermaid-diagrams`, then render with `pretty-mermaid`.
+| Benched skill | Produces | Would beat drawio at |
+|---|---|---|
+| [mermaid-diagrams](other_diagraming_tools/mermaid-diagrams/) | Mermaid source in Markdown | Diagrams that live in git and render natively on GitHub |
+| [pretty-mermaid](other_diagraming_tools/pretty-mermaid/) | Themed SVG/PNG/ASCII from existing Mermaid | Re-theming or exporting Mermaid you already have |
+| [excalidraw-diagram-generator](other_diagraming_tools/excalidraw-diagram-generator/) | `.excalidraw` JSON | A hand-drawn, whiteboard look |
+| [plantuml-ascii](other_diagraming_tools/plantuml-ascii/) | ASCII / Unicode text | Diagrams inside a terminal, code comment, or chat |
+| [c4-architecture](other_diagraming_tools/c4-architecture/) | `docs/architecture/c4-*.md` | Formal C4-model docs at several zoom levels |
+| [architecture-blueprint-generator](other_diagraming_tools/architecture-blueprint-generator/) | Architecture docs | Reverse-engineering docs from an existing codebase |
+| [create-architectural-decision-record](other_diagraming_tools/create-architectural-decision-record/) | An ADR | Recording *why* a decision was made (not a diagram) |
 
-> Each skill's `description` field states its lane and names the sibling to use
-> instead, so an agent picks correctly without reading this table. If you add a
-> new diagram skill, keep that discipline or triggering degrades for all of them.
+To activate one, symlink it like any other skill:
+
+```bash
+ln -sfn "$PWD/other_diagraming_tools/mermaid-diagrams" ~/.claude/skills/mermaid-diagrams
+```
+
+Activating one alongside `drawio-skill` is fine. Activating all seven recreates
+the ambiguity this structure exists to prevent. See
+[`other_diagraming_tools/README.md`](other_diagraming_tools/README.md).
 
 ---
 
@@ -139,6 +138,8 @@ print([e['path'] for e in i['icons'] if 'key vault' in e['name'].lower()])"
 Names don't always match intuition — Redis is `Cache-Redis` / `Azure-Managed-Redis`,
 the registry is `Container-Registries`. Use the index, not guesswork.
 
+Pairs directly with `drawio-skill`, which can embed these SVGs as shapes.
+
 **The icons are not open source.** Microsoft permits them in architecture
 diagrams, training material and documentation; they may not be modified,
 recolored, or used to represent your own product. See
@@ -152,8 +153,10 @@ recolored, or used to represent your own product. See
 |---|---|
 | Personal (all projects) | `ln -sfn "$PWD/skills/<name>" ~/.claude/skills/<name>` |
 | One project | `ln -sfn "$PWD/skills/<name>" <project>/.claude/skills/<name>` |
-| Everything | see [Quick start](#quick-start) |
+| All active skills | see [Quick start](#quick-start) |
+| A benched skill | `ln -sfn "$PWD/other_diagraming_tools/<name>" ~/.claude/skills/<name>` |
 
+Symlinking (rather than copying) means `git pull` updates every installed skill.
 Skills are independent — copy a single directory out and it still works.
 
 ---
@@ -161,7 +164,7 @@ Skills are independent — copy a single directory out and it still works.
 ## Conventions
 
 ```
-skills/<name>/
+<name>/
   SKILL.md        REQUIRED. YAML frontmatter (name, description) + the workflow.
                   `name` MUST equal the directory name.
   *.md            Reference docs, loaded progressively — not all read up front.
@@ -178,32 +181,33 @@ Adding a skill:
 3. Every relative path referenced in `SKILL.md` must exist, or be marked optional.
 4. Vendoring something? Keep its `LICENSE`, add an `UPSTREAM.md` with the exact
    commit, and record any local modification there.
+5. Adding another diagramming skill? Put it on the bench unless it is genuinely
+   replacing `drawio-skill` as the primary.
 
 ---
 
 ## Requirements
 
-Each `SKILL.md` states its own. Across the repo:
+Each `SKILL.md` states its own. Across the active skills:
 
 | Dependency | Needed by |
 |---|---|
-| Node.js | `frontend-slides`, `frontend-reports` (PDF export, deploy), `pretty-mermaid` |
-| Python 3 | `drawio-skill` (38 scripts), `excalidraw-diagram-generator` |
-| draw.io desktop CLI | `drawio-skill` — required |
+| draw.io desktop CLI | `drawio-skill` — **required** |
+| Python 3 | `drawio-skill` (38 scripts) |
 | Graphviz (`dot`) | `drawio-skill` auto-layout — optional |
-| PlantUML | `plantuml-ascii` |
+| Node.js | `frontend-slides`, `frontend-reports` (PDF export, deploy) |
 | `python-pptx` | `frontend-slides` PPTX conversion only |
 
-Playwright + Chromium install themselves on first PDF export.
+Playwright + Chromium install themselves on first PDF export. Benched skills add
+their own deps (PlantUML, Node for `pretty-mermaid`) only if you activate them.
 
 ---
 
 ## Licensing
 
-`frontend-slides` and `frontend-reports` are mine. Everything under
-[Diagrams & software architecture](#diagrams--software-architecture) is vendored,
-**MIT**, and keeps its upstream `LICENSE` plus an `UPSTREAM.md` pinning the exact
-commit it came from.
+`frontend-slides` and `frontend-reports` are mine. Every diagramming skill —
+active or benched — is vendored, **MIT**, and keeps its upstream `LICENSE` plus
+an `UPSTREAM.md` pinning the exact source commit.
 
 | Skill(s) | Upstream | License |
 |---|---|---|
@@ -214,7 +218,7 @@ commit it came from.
 | `azure/icons/` | Microsoft Azure architecture icons | [Microsoft terms](azure/Microsoft_Terms_of_Use.pdf) — restricted |
 | `azure/reference-architectures/` | [Azure Architecture Center](https://learn.microsoft.com/en-us/azure/architecture/) | CC BY 4.0 |
 
-The only local change to any vendored skill is the `description` field, rewritten
-to stop seven skills from claiming the same triggers. Each `UPSTREAM.md` records
-this. To update a vendored skill: re-copy from upstream at a newer commit, re-apply
-the description, and update the SHA.
+The only local change to any vendored skill is its `description` field, rewritten
+so `drawio-skill` reads as the primary and the benched skills state their narrow
+lane. Each `UPSTREAM.md` records this. To update one: re-copy from upstream at a
+newer commit, re-apply the description, and update the SHA.
