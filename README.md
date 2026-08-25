@@ -3,7 +3,7 @@
 My agent skills for Claude Code — HTML deliverables (slides, reports) and
 diagramming, plus the official Azure icon set and reference architectures.
 
-**3 active skills** in `skills/` · **7 benched** in `other_diagraming_tools/`
+**8 active skills** in `skills/` · **7 benched** in `other_diagraming_tools/`
 
 > **Diagrams → [`drawio-skill`](skills/drawio-skill/).** It is the one
 > diagramming skill that is installed and the default for every diagram request.
@@ -17,6 +17,7 @@ diagramming, plus the official Azure icon set and reference architectures.
 - [Quick start](#quick-start)
 - [Repository map](#repository-map)
 - [Active skills](#active-skills)
+- [Research pipeline](#research-pipeline)
 - [The bench](#the-bench)
 - [Azure assets](#azure-assets)
 - [Installing](#installing)
@@ -31,12 +32,21 @@ diagramming, plus the official Azure icon set and reference architectures.
 ```bash
 git clone https://github.com/tanaybaswa/agent-skills.git
 cd agent-skills
-mkdir -p ~/.claude/skills
+mkdir -p ~/.claude/skills ~/.claude/agents
 for s in skills/*/; do ln -sfn "$PWD/$s" ~/.claude/skills/"$(basename "$s")"; done
+
+# the research skills additionally need their companion agent + pyyaml
+ln -sfn "$PWD/agents/web-search-agent.md"  ~/.claude/agents/web-search-agent.md
+ln -sfn "$PWD/agents/web-search-modules"   ~/.claude/agents/web-search-modules
+pip install pyyaml
 ```
 
-That installs the three active skills. `other_diagraming_tools/` is deliberately
+That installs the eight active skills. `other_diagraming_tools/` is deliberately
 left out — see [The bench](#the-bench).
+
+> **Note:** the research skills are the only ones needing something outside
+> `~/.claude/skills/`. Skip the `agents/` lines and they will fail at the
+> web-search step.
 
 ---
 
@@ -47,7 +57,16 @@ agent-skills/
 ├── skills/                                     ACTIVE — installed, agents use these
 │   ├── drawio-skill/                           ★ the diagramming skill  (vendored)
 │   ├── frontend-slides/                        HTML presentations       (mine)
-│   └── frontend-reports/                       HTML reports             (mine)
+│   ├── frontend-reports/                       HTML reports             (mine)
+│   ├── research/                               ┐                        (vendored)
+│   ├── research-add-items/                     │ deep-research
+│   ├── research-add-fields/                    │ pipeline —
+│   ├── research-deep/                          │ see below
+│   └── research-report/                        ┘
+│
+├── agents/                                     companion subagent for the research
+│   ├── web-search-agent.md                     skills — installs to ~/.claude/agents/
+│   └── web-search-modules/                     (academic, github, stackoverflow, …)
 │
 ├── other_diagraming_tools/                     BENCH — reference only, not installed
 │   ├── mermaid-diagrams/                       Mermaid source
@@ -82,6 +101,48 @@ agent-skills/
 search, diff, PPTX/Mermaid conversion) and 14 reference docs. The two frontend
 skills each ship `scripts/export-pdf.sh` and `scripts/deploy.sh` (Vercel), with
 no build step.
+
+---
+
+## Research pipeline
+
+Five skills that work as **one sequence**, not independently. The model is a
+research matrix: *items* (the things being compared) × *fields* (the dimensions
+being compared on). Good for benchmark surveys, technology selection,
+competitive analysis and literature reviews.
+
+```
+/research <topic>        build the matrix — items and fields, from model
+                         knowledge plus a web-search pass, confirmed with you
+      ↓
+/research-add-items      widen the matrix (more things to compare)
+/research-add-fields     deepen it (more dimensions to compare on)
+      ↓
+/research-deep           fan out ONE background agent per item to fill its row
+      ↓
+/research-report         collapse the filled matrix into a markdown report,
+                         skipping values it could not establish
+```
+
+| Skill | Role |
+|---|---|
+| [**research**](skills/research/) | Preliminary pass → research outline (items × fields) |
+| [**research-add-items**](skills/research-add-items/) | Add research objects to an existing outline |
+| [**research-add-fields**](skills/research-add-fields/) | Add field definitions to an existing outline |
+| [**research-deep**](skills/research-deep/) | One independent agent per item, run in parallel |
+| [**research-report**](skills/research-report/) | Summarize results into a markdown report |
+
+All five are slash-invocable (`/research`, `/research-deep`, …).
+
+**Two extra requirements** — these are the only skills here that need anything
+beyond a symlink into `~/.claude/skills/`:
+
+1. `agents/web-search-agent.md` and `agents/web-search-modules/` installed to
+   `~/.claude/agents/`
+2. `pip install pyyaml`
+
+**Pairs with `frontend-reports`:** `/research-report` emits markdown; hand that
+to `frontend-reports` to render it as a polished, print-ready HTML document.
 
 ---
 
@@ -155,6 +216,7 @@ recolored, or used to represent your own product. See
 | One project | `ln -sfn "$PWD/skills/<name>" <project>/.claude/skills/<name>` |
 | All active skills | see [Quick start](#quick-start) |
 | A benched skill | `ln -sfn "$PWD/other_diagraming_tools/<name>" ~/.claude/skills/<name>` |
+| Research agents | `ln -sfn "$PWD/agents/web-search-agent.md" ~/.claude/agents/` (+ `web-search-modules`) |
 
 Symlinking (rather than copying) means `git pull` updates every installed skill.
 Skills are independent — copy a single directory out and it still works.
@@ -197,6 +259,8 @@ Each `SKILL.md` states its own. Across the active skills:
 | Graphviz (`dot`) | `drawio-skill` auto-layout — optional |
 | Node.js | `frontend-slides`, `frontend-reports` (PDF export, deploy) |
 | `python-pptx` | `frontend-slides` PPTX conversion only |
+| `pyyaml` | the research skills — **required** |
+| `~/.claude/agents/web-search-agent.md` | the research skills — **required**, see [Research pipeline](#research-pipeline) |
 
 Playwright + Chromium install themselves on first PDF export. Benched skills add
 their own deps (PlantUML, Node for `pretty-mermaid`) only if you activate them.
@@ -215,6 +279,7 @@ an `UPSTREAM.md` pinning the exact source commit.
 | `mermaid-diagrams`, `c4-architecture` | [softaworks/agent-toolkit](https://github.com/softaworks/agent-toolkit) | MIT |
 | `excalidraw-diagram-generator`, `plantuml-ascii`, `architecture-blueprint-generator`, `create-architectural-decision-record` | [github/awesome-copilot](https://github.com/github/awesome-copilot) | MIT |
 | `pretty-mermaid` | [imxv/pretty-mermaid-skills](https://github.com/imxv/pretty-mermaid-skills) | MIT |
+| `research*` + `agents/` | [Weizhena/Deep-Research-skills](https://github.com/Weizhena/Deep-Research-skills) | MIT |
 | `azure/icons/` | Microsoft Azure architecture icons | [Microsoft terms](azure/Microsoft_Terms_of_Use.pdf) — restricted |
 | `azure/reference-architectures/` | [Azure Architecture Center](https://learn.microsoft.com/en-us/azure/architecture/) | CC BY 4.0 |
 
