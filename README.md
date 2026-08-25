@@ -140,10 +140,14 @@ an agent finds all three from whichever it matches first.
 | **A** — official [Google Slides MCP server](https://developers.google.com/workspace/slides/api/guides/configure-mcp-server) | OAuth 2.0, Workspace Developer Preview enrollment | **Yes** — `read_presentation` / `update_presentation` |
 | **B** — Google Drive connector | Drive connector only, no extra setup | **No** — regenerating produces a new URL |
 
-Route B generates a `.pptx` (via the built-in `pptx` skill) and uploads it with
-Drive's automatic conversion on, which yields a real editable Slides deck. It is
-create-only: the Drive connector's `update_file` changes title and folder, not
-content. See [`skills/google-slides/references/mcp-setup.md`](skills/google-slides/references/mcp-setup.md).
+Route B generates a `.pptx` (via the built-in `pptx` skill) and relies on Drive
+converting it to native Slides on upload — **verified working**. Two caveats,
+both tested: it is create-only (the Drive connector's `update_file` changes title
+and folder, not content), and the *automated* upload only suits very small files,
+because the encoded deck has to be reproduced exactly in a tool parameter. For a
+real deck the reliable move is to generate the `.pptx` and have the user drop it
+into Drive, which converts it with no setup. See
+[`skills/google-slides/SKILL.md`](skills/google-slides/SKILL.md#verified-behavior-2026-08-25).
 
 ---
 

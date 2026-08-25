@@ -107,7 +107,28 @@ a real, fully editable Google Slides deck.
 
 4. **Report the deck URL.**
 
-### Hard limitation of Route B
+### Read this before choosing Route B
+
+**The upload leg is unreliable for real decks.** `base64Content` is a string
+parameter, so the entire encoded file has to be reproduced exactly in the tool
+call. A minimal two-slide deck is already ~25,000 base64 characters, and
+reproducing that verbatim fails in practice — a single wrong character is
+rejected outright as invalid base64.
+
+Treat Route B's automated upload as viable only for very small files. For a real
+deck, prefer one of these:
+
+- **Route A**, if the Slides MCP server is available. This is the only fully
+  automated path.
+- **Hand off the file.** Generate the `.pptx` locally with the `pptx` skill, give
+  the user the path, and have them drag it into Drive. Drive converts it to
+  Slides on upload — no flag needed, no setup. One manual step, completely
+  reliable, and it works for a deck of any size.
+
+Do not burn several attempts retrying a large base64 upload. Recognise the size
+and offer the handoff instead.
+
+### Other limitations of Route B
 
 **The Drive connector cannot change a deck's content after upload.** Its
 `update_file` tool supports only `title` and `parentId` — metadata, not slides.
@@ -116,6 +137,16 @@ So on this route, revisions mean regenerating the `.pptx` and uploading again,
 which produces a **new file with a new URL**. Tell the user this up front if they
 are likely to want edits. If they need to iterate on one stable link, they need
 Route A.
+
+### Verified behavior (2026-08-25)
+
+Tested directly against the Google Drive connector:
+
+| Behavior | Result |
+| --- | --- |
+| Upload converts to a Google first-party type by default | **Confirmed** — `text/plain` upload returned `application/vnd.google-apps.document` |
+| `create_file` can create a native Slides file with no content | **Confirmed** — returned `application/vnd.google-apps.presentation` with a working `docs.google.com/presentation/...` URL |
+| Uploading a real `.pptx` via `base64Content` | **Failed** — a ~25,000-character base64 string could not be reproduced exactly in the tool call. This is the limitation described above, not a connector fault. |
 
 ---
 
