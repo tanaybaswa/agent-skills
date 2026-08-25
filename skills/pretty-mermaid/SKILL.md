@@ -1,13 +1,6 @@
 ---
 name: pretty-mermaid
-description: |
-  Generate and render Mermaid diagrams for architecture docs, READMEs, PRs,
-  terminals, chats, and CI as themed SVG, PNG, or ASCII/Unicode art. Use this skill whenever
-  the user provides Mermaid code or .mmd files; asks for a flowchart,
-  sequence/state/class diagram, ERD, XY chart, or architecture/workflow/data-model
-  visualization; or wants to beautify, theme, batch-convert, or make a diagram
-  terminal-friendly. Runs locally without a browser or DOM, with 15 built-in
-  themes and custom colors.
+description: 'Renders EXISTING Mermaid code or .mmd files into themed SVG, PNG or ASCII/Unicode art, locally with no browser or DOM. Use when the user already has Mermaid and wants it beautified, themed, recolored, batch-converted, exported as an image, or made terminal-friendly; 15 built-in themes plus custom colors. This is the rendering step, not the authoring step: to write Mermaid from a description use mermaid-diagrams first, then this to render it.'
 ---
 
 # Pretty Mermaid

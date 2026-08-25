@@ -1,6 +1,6 @@
 ---
 name: architecture-blueprint-generator
-description: 'Comprehensive project architecture blueprint generator that analyzes codebases to create detailed architectural documentation. Automatically detects technology stacks and architectural patterns, generates visual diagrams, documents implementation patterns, and provides extensible blueprints for maintaining architectural consistency and guiding new development.'
+description: 'Analyzes an EXISTING codebase and writes architectural documentation from what it finds - detects the technology stack and architectural patterns, documents implementation conventions and component relationships, and produces a blueprint for keeping new code consistent with the current design. Use when pointed at a repository and asked to document, audit or reverse-engineer its architecture. Not for drawing a diagram from a written description - use mermaid-diagrams, c4-architecture or drawio-skill.'
 ---
 
 # Comprehensive Project Architecture Blueprint Generator

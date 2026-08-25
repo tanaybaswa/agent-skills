@@ -141,7 +141,7 @@ If the user already gave a vibe, use it. If they did not, infer the likely mood 
 
 If the user explicitly names a preset or bold template, honor that as one option and generate the remaining preview slots around it.
 
-Read [STYLE_PRESETS.md](STYLE_PRESETS.md) for safe preset candidates. If [bold-template-pack/selection-index.json](bold-template-pack/selection-index.json) exists, read that compact index too, but do not read any `design.md` files yet.
+Read [STYLE_PRESETS.md](STYLE_PRESETS.md) for safe preset candidates. If the optional `bold-template-pack/selection-index.json` is installed, read that compact index too, but do not read any `design.md` files yet. If it is not installed, skip it and plan a custom expressive design instead.
 
 | Mood                | Suggested Presets                                  |
 | ------------------- | -------------------------------------------------- |
@@ -152,7 +152,8 @@ Read [STYLE_PRESETS.md](STYLE_PRESETS.md) for safe preset candidates. If [bold-t
 
 **Preview mix rules:**
 
-- Generate 3 previews by default: 1 safe preset from `STYLE_PRESETS.md`, at least 1 bold template from `bold-template-pack/selection-index.json`, and 1 wildcard.
+- Generate 3 previews by default: 1 safe preset from `STYLE_PRESETS.md`, 1 expressive option, and 1 wildcard.
+- **The `bold-template-pack/` is optional and is NOT bundled with this skill.** When it is installed, draw the expressive option from it. When it is absent — the default — self-generate the expressive option as a custom design using the custom wildcard design rules below. Never block on the pack, never read from it without checking it exists, and never name a template that is not installed.
 - The wildcard may be either a second bold template or a self-generated custom design. Choose whichever creates the strongest, most useful contrast for the user's occasion, audience, mood, and content.
 - Do not force every expressive option to come from the template library. If the brief has a sharper, more specific design opportunity than the available templates, use the wildcard slot to design freely.
 - For conservative or high-stakes decks, make the safe preset especially restrained; choose a calm, higher-formality bold template; make the wildcard either another restrained template or a custom design that feels authoritative rather than decorative.
@@ -168,7 +169,7 @@ Read [STYLE_PRESETS.md](STYLE_PRESETS.md) for safe preset candidates. If [bold-t
 - Use fixed 1920×1080 stage rules and pass the same preview authenticity checks as every other option.
 - Never render "custom", "wildcard", "AI-generated", or design-process labels on the slide itself.
 
-**Bold template selection rules:**
+**Bold template selection rules** (applies only when `bold-template-pack/` is installed — skip this entire block when it is not):
 
 - Match user purpose and mood against `mood`, `tone`, `best_for`, `avoid_for`, `formality`, `density`, and `scheme`.
 - Treat `best_for` examples as soft signals, not strict industry filters.
@@ -214,7 +215,7 @@ If the user's stated needs are mixed, choose the closer of the two modes instead
 
 Never let high density become visual clutter. If a high-density slide starts to overflow, split it or redesign it into a clearer structure.
 
-If the user selected a bold template from `bold-template-pack`, read that one template's full `design.md` before generating. Do not read the other bold templates. Treat `design.md` as the design recipe:
+If the user selected a bold template from `bold-template-pack` (possible only when that optional pack is installed), read that one template's full `design.md` before generating. Do not read the other bold templates. Treat `design.md` as the design recipe:
 
 - Preserve its fonts, palette, decorative vocabulary, spacing rhythm, and component grammar.
 - Generate the final deck as a fixed 1920×1080 stage scaled uniformly to the viewport, regardless of whether the source template originally used `deck-stage.js` or viewport-fluid CSS.
@@ -369,9 +370,9 @@ This captures each slide as a screenshot and combines them into a PDF. Perfect f
 | File                                               | Purpose                                                              | When to Read              |
 | -------------------------------------------------- | -------------------------------------------------------------------- | ------------------------- |
 | [STYLE_PRESETS.md](STYLE_PRESETS.md)               | 12 curated visual presets with colors, fonts, and signature elements | Phase 2 (style selection) |
-| [bold-template-pack/selection-index.json](bold-template-pack/selection-index.json) | Compact bold template metadata for candidate selection | Phase 2 (style selection) |
-| [bold-template-pack/templates/*/preview.md](bold-template-pack/templates/) | Lightweight style cards for shortlisted bold title previews | Phase 2 after shortlisting |
-| [bold-template-pack/templates/*/design.md](bold-template-pack/templates/) | Detailed design-system docs for the selected bold template only | Phase 3 after user selection |
+| bold-template-pack/selection-index.json | **Optional, not bundled.** Compact bold template metadata for candidate selection | Phase 2, only if installed |
+| bold-template-pack/templates/*/preview.md | **Optional, not bundled.** Lightweight style cards for shortlisted bold title previews | Phase 2 after shortlisting, only if installed |
+| bold-template-pack/templates/*/design.md | **Optional, not bundled.** Detailed design-system docs for the selected bold template only | Phase 3 after user selection, only if installed |
 | [viewport-base.css](viewport-base.css)             | Mandatory fixed-stage CSS — copy into every presentation             | Phase 3 (generation)      |
 | [html-template.md](html-template.md)               | HTML structure, JS features, code quality standards                  | Phase 3 (generation)      |
 | [animation-patterns.md](animation-patterns.md)     | CSS/JS animation snippets and effect-to-feeling guide                | Phase 3 (generation)      |
